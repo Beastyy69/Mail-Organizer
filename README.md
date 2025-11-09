@@ -77,9 +77,19 @@ PROJECT STRUCTURE
 Mail-Organizer/
 ├── index.html
 ├── config.json
-├── css/styles.css
-├── js/app.js, auth.js, gmail.js, ai-processor.js, ui-renderer.js, state.js, storage.js, utils.js
+├── css/
+│   └── styles.css
+├── js/
+│   ├── app.js
+│   ├── auth.js
+│   ├── gmail.js
+│   ├── ai-processor.js
+│   ├── ui-renderer.js
+│   ├── state.js
+│   ├── storage.js
+│   └── utils.js
 └── README.md
+
 
 SECURITY & PRIVACY
 ------------------
