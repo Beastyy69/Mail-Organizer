@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailMind Pro - AI Email Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    
+    <!-- Login Page -->
+    <div id="loginPage" class="min-h-screen flex items-center justify-center p-6">
+        <div class="glass-ultra slide-in-up" style="border-radius: 32px; max-width: 500px; width: 100%; padding: 48px;">
+            <div class="text-center mb-12">
+                <div class="w-24 h-24 mx-auto mb-6 flex items-center justify-center float-animation" 
+                     style="border-radius: 24px; box-shadow: 0 15px 40px rgba(70, 70, 90, 0.6); background: transparent;">
+                    <img src="mailmind.jpg" alt="MailMind Pro Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 24px;">
+                </div>
+                <h1 class="text-5xl font-black text-gradient mb-4">MailMind Pro</h1>
+                <p class="text-gray-300 text-lg">AI-Powered Email Intelligence</p>
+                <span class="ai-badge mt-4">🤖 Powered by Gemini AI</span>
+            </div>
+
+            <div class="space-y-8">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-white mb-3">Get Started</h2>
+                    <p class="text-gray-400">Connect your Gmail account to analyze emails with AI</p>
+                </div>
+
+                <div id="googleSignInButton" class="flex justify-center">
+                    <!-- Button will be rendered here -->
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3 p-4 rounded-2xl" style="background: rgba(99, 138, 210, 0.1); border: 1px solid rgba(99, 138, 210, 0.2);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a7ddb" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <div>
+                            <h3 class="text-white font-bold mb-1">Gmail Access Required</h3>
+                            <p class="text-gray-400 text-sm">We need permission to read your emails for AI analysis</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-4 rounded-2xl" style="background: rgba(99, 138, 210, 0.1); border: 1px solid rgba(99, 138, 210, 0.2);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a7ddb" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <div>
+                            <h3 class="text-white font-bold mb-1">AI Processing</h3>
+                            <p class="text-gray-400 text-sm">Your emails will be analyzed with Gemini AI for summaries and smart replies</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center text-gray-500 text-sm">
+                    <p>🔒 Your data is processed securely and never stored on our servers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appContainer" style="display: none;" class="min-h-screen p-6">
+        <div class="max-w-[1800px] mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Statistics Sidebar - Left Side -->
+                <div class="lg:col-span-1">
+                    <div class="glass-ultra" style="border-radius: 28px; padding: 32px;">
+                        <h2 class="text-white text-2xl font-black mb-6">📊 Dashboard</h2>
+                        
+                        <!-- Statistics Cards - Vertical Layout -->
+                        <div class="space-y-6">
+                            <!-- Total Emails -->
+                            <div class="stat-card-vertical">
+                                <div class="flex items-center gap-4 mb-3">
+                                    <div class="w-12 h-12 flex items-center justify-center" style="background: linear-gradient(135deg, #4a7ddb, #3a5fc1); border-radius: 12px;">
+                                        <span class="text-white text-lg">📧</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-300 font-bold text-sm uppercase">Total Emails</p>
+                                        <p id="totalEmails" class="text-3xl font-black text-white">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- High Urgency -->
+                            <div class="stat-card-vertical">
+                                <div class="flex items-center gap-4 mb-3">
+                                    <div class="w-12 h-12 flex items-center justify-center" style="background: linear-gradient(135deg, #ff6b6b, #ee5a6f); border-radius: 12px;">
+                                        <span class="text-white text-lg">⚠️</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-300 font-bold text-sm uppercase">High Urgency</p>
+                                        <p id="highUrgency" class="text-3xl font-black" style="color: #ff6b6b;">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Required -->
+                            <div class="stat-card-vertical">
+                                <div class="flex items-center gap-4 mb-3">
+                                    <div class="w-12 h-12 flex items-center justify-center" style="background: linear-gradient(135deg, #ffa502, #ff6348); border-radius: 12px;">
+                                        <span class="text-white text-lg">✅</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-300 font-bold text-sm uppercase">Action Required</p>
+                                        <p id="actionRequired" class="text-3xl font-black" style="color: #ffa502;">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI Processed -->
+                            <div class="stat-card-vertical">
+                                <div class="flex items-center gap-4 mb-3">
+                                    <div class="w-12 h-12 flex items-center justify-center" style="background: linear-gradient(135deg, #a78bfa, #c084fc); border-radius: 12px;">
+                                        <span class="text-white text-lg">🤖</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-300 font-bold text-sm uppercase">AI Processed</p>
+                                        <p id="aiProcessed" class="text-3xl font-black" style="color: #a78bfa;">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Completed -->
+                            <div class="stat-card-vertical">
+                                <div class="flex items-center gap-4 mb-3">
+                                    <div class="w-12 h-12 flex items-center justify-center" style="background: linear-gradient(135deg, #26de81, #20bf6b); border-radius: 12px;">
+                                        <span class="text-white text-lg">✔</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-300 font-bold text-sm uppercase">Completed</p>
+                                        <p id="processedCount" class="text-3xl font-black" style="color: #26de81;">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="mt-8 pt-6 border-t border-gray-700">
+                            <h3 class="text-white font-bold mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button onclick="processAllWithAI()" class="w-full text-left p-3 rounded-xl font-medium text-sm transition-all duration-200 hover:scale-105" style="background: rgba(167, 139, 250, 0.15); border: 1px solid rgba(167, 139, 250, 0.3); color: #a78bfa;">
+                                    🤖 AI Process All
+                                </button>
+                                <button onclick="markAllProcessed()" class="w-full text-left p-3 rounded-xl font-medium text-sm transition-all duration-200 hover:scale-105" style="background: rgba(38, 222, 129, 0.15); border: 1px solid rgba(38, 222, 129, 0.3); color: #26de81;">
+                                    ✔️ Mark All Processed
+                                </button>
+                                <button onclick="exportToCSV()" class="w-full text-left p-3 rounded-xl font-medium text-sm transition-all duration-200 hover:scale-105" style="background: rgba(74, 125, 219, 0.15); border: 1px solid rgba(74, 125, 219, 0.3); color: #4a7ddb;">
+                                    📥 Export All to CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="lg:col-span-3">
+                    <!-- Header -->
+                    <div class="glass-ultra mb-8" style="border-radius: 28px; padding: 32px;">
+                        <div class="flex items-center justify-between flex-wrap gap-6">
+                            <div class="flex items-center gap-6">
+                                <a href="#" onclick="location.reload(); return false;" class="flex items-center gap-6 transition-transform duration-300 hover:scale-105" style="text-decoration: none; cursor: pointer;">
+                                    <div class="w-16 h-16 flex items-center justify-center" 
+                                         style="border-radius: 16px; box-shadow: 0 15px 40px rgba(70, 70, 90, 0.6); background: transparent;">
+                                        <img src="mailmind.jpg" alt="MailMind Pro Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 16px;">
+                                    </div>
+                                    <div>
+                                        <h1 class="text-3xl font-black text-gradient mb-1">MailMind Pro</h1>
+                                        <p id="userEmailDisplay" class="text-gray-300 text-lg font-medium"></p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="flex gap-4 flex-wrap">
+                                <button onclick="refreshEmails(); debugAuthState();" class="morph-btn">
+                                    <span style="position: relative; z-index: 1;">🔄 Debug & Refresh</span>
+                                </button>
+                                <button onclick="exportFilteredToCSV()" class="morph-btn">
+                                    <span style="position: relative; z-index: 1;">📥 Export Filtered</span>
+                                </button>
+                                <button onclick="handleLogout()" class="morph-btn" style="background: rgba(115, 75, 195, 0.25);">
+                                    <span style="position: relative; z-index: 1;">🚪 Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email List and Detail -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Email List -->
+                        <div class="lg:col-span-1 glass-ultra" style="border-radius: 28px; overflow: hidden;">
+                            <div style="background: linear-gradient(135deg, #4a7ddb, #3a5fc1); padding: 28px;">
+                                <h2 class="text-white text-2xl font-black mb-5">📬 Inbox</h2>
+                                <input 
+                                    type="text" 
+                                    id="searchInput" 
+                                    placeholder="Search emails..." 
+                                    oninput="handleSearch(this.value)"
+                                    class="w-full px-4 py-4 rounded-2xl text-white font-medium outline-none"
+                                    style="background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.2);"
+                                />
+                            </div>
+
+                            <div class="p-5 bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-700">
+                                <div class="flex gap-3 overflow-x-auto">
+                                    <button onclick="filterEmails('all')" class="filter-btn active px-5 py-3 rounded-xl font-bold text-sm whitespace-nowrap bg-gray-700 text-gray-300" data-filter="all">All</button>
+                                    <button onclick="filterEmails('high')" class="filter-btn px-5 py-3 rounded-xl font-bold text-sm whitespace-nowrap bg-gray-700 text-gray-300" data-filter="high">High</button>
+                                    <button onclick="filterEmails('action')" class="filter-btn px-5 py-3 rounded-xl font-bold text-sm whitespace-nowrap bg-gray-700 text-gray-300" data-filter="action">Action</button>
+                                    <button onclick="filterEmails('meeting')" class="filter-btn px-5 py-3 rounded-xl font-bold text-sm whitespace-nowrap bg-gray-700 text-gray-300" data-filter="meeting">Meeting</button>
+                                    <button onclick="filterEmails('ai')" class="filter-btn px-5 py-3 rounded-xl font-bold text-sm whitespace-nowrap bg-gray-700 text-gray-300" data-filter="ai">AI Processed</button>
+                                </div>
+                            </div>
+
+                            <div id="emailListContainer" class="custom-scroll h-[650px] overflow-y-auto" style="background: rgba(10, 10, 30, 0.7);">
+                                <div class="flex items-center justify-center h-full">
+                                    <div class="loader"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email Detail -->
+                        <div class="lg:col-span-2 glass-ultra" style="border-radius: 28px; overflow: hidden; min-height: 850px;">
+                            <div id="emailDetailContainer">
+                                <div class="flex flex-col items-center justify-center h-[850px] text-center p-12">
+                                    <div class="text-7xl mb-8 float-animation">📧</div>
+                                    <h3 class="text-3xl font-black text-white mb-4">Select an Email</h3>
+                                    <p class="text-gray-400 text-lg max-w-md">Choose an email from the list to view AI-powered insights, summaries, and smart reply suggestions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/state.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/storage.js"></script>
+    <script src="./js/ui-renderer.js"></script>
+    <script src="./js/ai-processor.js"></script>
+    <script src="./js/gmail.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/app.js"></script>
+</body>
+</html>
