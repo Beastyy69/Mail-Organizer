@@ -24,6 +24,33 @@ async function loadConfig() {
         return false;
     }
 }
+let urgencyChartInstance = null;
+
+function renderUrgencyChart() {
+  const canvas = document.getElementById('urgencyChart');
+  if (!canvas) return;
+
+  const counts = { High: 0, Medium: 0, Low: 0 };
+  emails.forEach(e => {
+    if (counts[e.urgency] !== undefined) {
+      counts[e.urgency]++;
+    }
+  });
+
+  if (urgencyChartInstance) {
+    urgencyChartInstance.destroy();
+  }
+
+  urgencyChartInstance = new Chart(canvas, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{
+        data: Object.values(counts)
+      }]
+    }
+  });
+}
 
 // Load processed emails from localStorage
 function loadProcessedEmails() {
@@ -251,7 +278,7 @@ async function fetchGmailEmails(token) {
             // Update UI after each batch
             renderEmailList();
             updateStatistics();
-            
+            renderUrgencyChart()
             // Show progress
             const percentage = Math.round((emails.length / allMessages.length) * 100);
             container.innerHTML = `
@@ -400,9 +427,9 @@ function classifyEmailRuleBased(email) {
     const text = ((email.body || '') + ' ' + (email.subject || '')).toLowerCase();
 
     let intent = 'Informational';
-    if (text.match(/\b(meeting|schedule|calendar|appointment|call|zoom|teams)\b/)) {
-        intent = 'Meeting Request';
-    } else if (text.match(/\b(urgent|asap|important|critical|action required|need|deadline|respond|reply needed)\b/)) {
+    if (text.match(/\b(meeting|meet|schedule|calendar|appointment|call|zoom|teams|interview|exam|test|assessment|webinar|workshop|session|due on|deadline|pay by)\b/i)) {
+    intent = 'Meeting Request';
+} else if (text.match(/\b(urgent|asap|important|critical|action required|need|deadline|respond|reply needed)\b/)) {
         intent = 'Action Required';
     } else if (text.match(/\b(follow up|following up|checking in|status update|progress)\b/)) {
         intent = 'Follow-up';
@@ -503,9 +530,19 @@ Respond ONLY with valid JSON, no additional text or markdown formatting.`
         console.log('🤖 AI Response Text:', aiResponse);
         
         // Clean and parse JSON
-        let cleanJson = aiResponse.replace(/```json|```/g, '').trim();
-        const parsed = JSON.parse(cleanJson);
-        
+let cleanJson = aiResponse
+  .replace(/```json|```/g, '')
+  .replace(/\n/g, ' ')
+  .trim();
+
+let parsed;
+try {
+  parsed = JSON.parse(cleanJson);
+} catch (e) {
+  console.error('❌ Invalid Gemini JSON:', cleanJson);
+  return useFallbackClassification(email);
+}
+
         console.log('✅ Parsed AI Result:', parsed);
         console.log('🎉 Gemini AI processing successful!');
         
@@ -519,13 +556,10 @@ Respond ONLY with valid JSON, no additional text or markdown formatting.`
         };
         
     } catch (error) {
-        console.error('❌ AI processing error:', error);
-        console.error('❌ Error details:', error.message);
-        console.log('⚠️ Falling back to rule-based classification');
-        
-        // Re-throw error so the calling function can handle it
-        throw error;
-    }
+    console.error('❌ AI processing error:', error);
+    console.log('⚠️ Falling back to rule-based classification');
+    return useFallbackClassification(email);
+}
 }
 
 // Consolidated fallback function
@@ -811,18 +845,23 @@ function renderEmailDetail(email) {
     const container = document.getElementById('emailDetailContainer');
     const isProcessed = processedEmails[email.id];
     const selectedReply = isProcessed?.selectedReply;
-    
+
     const fullBody = email.fullBody || email.body;
     const shouldTruncate = fullBody.length > 1000;
     const displayBody = shouldTruncate ? fullBody.substring(0, 1000) + '...' : fullBody;
 
     container.innerHTML = `
         <div style="animation: slideInUp 0.6s;">
+            <!-- HEADER -->
             <div style="background: linear-gradient(135deg, #4a7ddb, #3a5fc1); padding: 40px;">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-white text-3xl font-black email-content">${escapeHtml(email.subject)}</h2>
-                    ${email.aiProcessed ? '<span class="ai-badge" style="font-size: 1rem;">🤖 AI Analyzed</span>' : 
-                        `<button onclick="processSingleEmailWithAI('${email.id}')" class="expand-btn" style="margin: 0;">🤖 Process with AI</button>`}
+                    <h2 class="text-white text-3xl font-black email-content">
+                        ${escapeHtml(email.subject)}
+                    </h2>
+                    ${email.aiProcessed
+                        ? '<span class="ai-badge" style="font-size:1rem;">🤖 AI Analyzed</span>'
+                        : `<button onclick="processSingleEmailWithAI('${email.id}')" class="expand-btn">🤖 Process with AI</button>`
+                    }
                 </div>
                 <div class="flex flex-wrap gap-6 text-white text-sm">
                     <span>📧 ${escapeHtml(email.senderName)}</span>
@@ -831,66 +870,71 @@ function renderEmailDetail(email) {
                 </div>
             </div>
 
-            <div class="custom-scroll" style="padding: 40px; background: rgba(10, 10, 30, 0.9); max-height: 750px; overflow-y: auto;">
-                <div class="mb-8 p-8 rounded-3xl" style="background: rgba(99, 138, 210, 0.15); border: 2px solid rgba(99, 138, 210, 0.3);">
+            <div class="custom-scroll" style="padding:40px; background:rgba(10,10,30,0.9); max-height:750px; overflow-y:auto;">
+
+                <!-- AI CLASSIFICATION -->
+                <div class="mb-8 p-8 rounded-3xl" style="background:rgba(99,138,210,0.15); border:2px solid rgba(99,138,210,0.3);">
                     <h3 class="font-black text-white text-xl mb-6">🤖 AI Classification</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div class="p-6 rounded-2xl" style="background: rgba(15, 15, 40, 0.8); border: 1px solid rgba(99, 138, 210, 0.3);">
+                        <div class="p-6 rounded-2xl bg-[rgba(15,15,40,0.8)] border border-[rgba(99,138,210,0.3)]">
                             <p class="text-gray-400 text-xs font-bold mb-2">INTENT</p>
                             <p class="font-black text-lg text-white">${email.intent}</p>
                         </div>
-                        <div class="p-6 rounded-2xl" style="background: rgba(15, 15, 40, 0.8); border: 1px solid rgba(99, 138, 210, 0.3);">
+                        <div class="p-6 rounded-2xl bg-[rgba(15,15,40,0.8)] border border-[rgba(99,138,210,0.3)]">
                             <p class="text-gray-400 text-xs font-bold mb-2">URGENCY</p>
-                            <p class="font-black text-lg" style="color: ${email.urgency === 'High' ? '#ff6b6b' : email.urgency === 'Medium' ? '#ffa502' : '#26de81'}">${email.urgency}</p>
+                            <p class="font-black text-lg"
+                               style="color:${email.urgency === 'High' ? '#ff6b6b' : email.urgency === 'Medium' ? '#ffa502' : '#26de81'}">
+                               ${email.urgency}
+                            </p>
                         </div>
-                        <div class="p-6 rounded-2xl" style="background: rgba(15, 15, 40, 0.8); border: 1px solid rgba(99, 138, 210, 0.3);">
+                        <div class="p-6 rounded-2xl bg-[rgba(15,15,40,0.8)] border border-[rgba(99,138,210,0.3)]">
                             <p class="text-gray-400 text-xs font-bold mb-2">SENTIMENT</p>
                             <p class="font-black text-lg text-white">${email.sentiment}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-8 p-8 rounded-3xl" style="border: 2px solid ${email.aiProcessed ? 'rgba(167, 139, 250, 0.5)' : 'rgba(99, 138, 210, 0.3)'}; background: ${email.aiProcessed ? 'rgba(167, 139, 250, 0.1)' : 'rgba(15, 15, 40, 0.6)'};">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-black text-white text-xl">📝 ${email.aiProcessed ? 'AI-Generated' : 'Rule-Based'} Summary</h3>
-                        ${email.aiProcessed ? 
-                            '<span class="ai-badge">🤖 Gemini AI</span>' : 
-                            '<span class="badge" style="background: rgba(255, 165, 2, 0.3); color: #ffa502; border: 1px solid rgba(255, 165, 2, 0.5);">⚠️ Basic</span>'}
-                    </div>
-                    <p class="text-gray-300 leading-relaxed email-content">${escapeHtml(email.summary)}</p>
-                    ${!email.aiProcessed ? '<p class="text-gray-500 text-sm mt-3">💡 Click "Process with AI" above for AI-powered analysis</p>' : ''}
+                <!-- SUMMARY -->
+                <div class="mb-8 p-8 rounded-3xl"
+                     style="border:2px solid ${email.aiProcessed ? 'rgba(167,139,250,0.5)' : 'rgba(99,138,210,0.3)'};
+                            background:${email.aiProcessed ? 'rgba(167,139,250,0.1)' : 'rgba(15,15,40,0.6)'};">
+                    <h3 class="font-black text-white text-xl mb-4">📝 Summary</h3>
+                    <p class="text-gray-300 leading-relaxed email-content">
+                        ${escapeHtml(email.summary)}
+                    </p>
                 </div>
 
-                <div class="mb-8 p-8 rounded-3xl" style="background: rgba(15, 15, 40, 0.7);">
+                <!-- FULL EMAIL -->
+                <div class="mb-8 p-8 rounded-3xl bg-[rgba(15,15,40,0.7)]">
                     <h3 class="font-black text-white text-xl mb-4">📄 Full Email</h3>
-                    <div class="p-6 rounded-2xl" style="background: rgba(10, 10, 30, 0.8); border: 1px solid rgba(99, 138, 210, 0.2);">
-                        <div id="emailBody_${email.id}" class="text-gray-300 leading-relaxed email-content" style="max-height: ${shouldTruncate ? '400px' : 'none'}; overflow-y: ${shouldTruncate ? 'auto' : 'visible'};">${escapeHtml(displayBody)}</div>
+                    <div class="p-6 rounded-2xl bg-[rgba(10,10,30,0.8)] border border-[rgba(99,138,210,0.2)]">
+                        <div id="emailBody_${email.id}" class="text-gray-300 email-content"
+                             style="max-height:${shouldTruncate ? '400px' : 'none'}; overflow-y:auto;">
+                            ${escapeHtml(displayBody)}
+                        </div>
                         ${shouldTruncate ? `
-                            <button onclick="toggleFullEmail('${email.id}')" id="expandBtn_${email.id}" class="expand-btn">
-                                Show Full Email (${Math.round(fullBody.length / 1000)}k characters)
-                            </button>
-                        ` : ''}
+                            <button onclick="toggleFullEmail('${email.id}')" class="expand-btn mt-4">
+                                Show Full Email
+                            </button>` : ''}
                     </div>
                 </div>
 
-                <div class="p-8 rounded-3xl" style="background: ${email.aiProcessed ? 'rgba(167, 139, 250, 0.15)' : 'rgba(99, 138, 210, 0.15)'}; border: 2px solid ${email.aiProcessed ? 'rgba(167, 139, 250, 0.5)' : 'rgba(99, 138, 210, 0.3)'};">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="font-black text-white text-xl">💡 Smart Replies</h3>
-                        ${email.aiProcessed ? 
-                            '<span class="ai-badge">🤖 AI Generated</span>' : 
-                            '<span class="badge" style="background: rgba(255, 165, 2, 0.3); color: #ffa502; border: 1px solid rgba(255, 165, 2, 0.5);">📝 Templates</span>'}
-                    </div>
-                    ${!email.aiProcessed ? 
-                        '<p class="text-gray-400 text-sm mb-4">⚠️ These are generic templates. Use AI processing for personalized replies.</p>' : 
-                        '<p class="text-gray-400 text-sm mb-4">✨ These replies are generated by Gemini AI based on the email content.</p>'}
+                <!-- SMART REPLIES -->
+                <div class="p-8 rounded-3xl"
+                     style="background:rgba(167,139,250,0.15); border:2px solid rgba(167,139,250,0.5);">
+                    <h3 class="font-black text-white text-xl mb-6">💡 Smart Replies</h3>
+
                     <div class="space-y-4">
                         ${email.replies.map(reply => `
-                            <div class="reply-card ${selectedReply?.id === reply.id ? 'selected' : ''}" 
-                                 onclick="selectReply('${email.id}', ${reply.id}, '${escapeHtml(reply.label)}', \`${escapeHtml(reply.text)}\`)"
-                                 style="padding: 24px; border-radius: 20px;">
-                                <div class="flex justify-between items-center mb-3">
+                            <div class="reply-card"
+                                 onclick="sendReply(
+                                   ${JSON.stringify(email)},
+                                   \`${reply.text.replace(/`/g, '\\`')}\`
+                                 )"
+                                 style="padding:24px; border-radius:20px; cursor:pointer;">
+                                <div class="flex justify-between mb-2">
                                     <span class="font-black text-white">${escapeHtml(reply.label)}</span>
-                                    ${selectedReply?.id === reply.id ? '<span style="color: #4a7ddb; font-size: 24px;">✓</span>' : ''}
+                                    <span class="text-green-400">📤 Send</span>
                                 </div>
                                 <p class="text-gray-300 email-content">${escapeHtml(reply.text)}</p>
                             </div>
@@ -898,15 +942,16 @@ function renderEmailDetail(email) {
                     </div>
                 </div>
 
-                ${selectedReply ? `
-                    <div class="mt-8 p-8 rounded-3xl" style="background: rgba(38, 222, 129, 0.15); border: 3px solid #26de81;">
-                        <h3 class="font-black text-xl mb-4" style="color: #26de81;">✅ Draft Ready</h3>
-                        <div class="p-6 rounded-2xl" style="background: rgba(10, 10, 30, 0.8);">
-                            <p class="text-gray-300 email-content">${escapeHtml(selectedReply.text)}</p>
-                        </div>
-                        <p class="text-gray-400 text-sm mt-4">This email has been marked as processed. You can copy this reply and send it through Gmail.</p>
+                <!-- CALENDAR BUTTON -->
+                ${email.calendarEvent?.required ? `
+                    <div class="mt-8 text-center">
+                        <button class="morph-btn"
+                            onclick='createCalendarEvent(${JSON.stringify(email.calendarEvent)})'>
+                            📅 Add to Google Calendar
+                        </button>
                     </div>
                 ` : ''}
+
             </div>
         </div>
     `;
