@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     
@@ -72,6 +73,7 @@
                 <div class="lg:col-span-1">
                     <div class="glass-ultra" style="border-radius: 28px; padding: 32px;">
                         <h2 class="text-white text-2xl font-black mb-6">📊 Dashboard</h2>
+                        <canvas id="urgencyChart" height="200" class="mt-6"></canvas>
                         
                         <!-- Statistics Cards - Vertical Layout -->
                         <div class="space-y-6">
@@ -247,5 +249,6 @@
     <script src="./js/gmail.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/app.js"></script>
+    <script src="js/calendar.js"></script>
 </body>
 </html>
